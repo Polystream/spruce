@@ -25,7 +25,7 @@ steps:
     type: "build"
     image_name: "build-containers-build-spruce"
     working_directory: "${{clone}}"
-    dockerfile: "Dockerfile"
+    dockerfile: "Dockerfile-polystream"
     tag: "${{CF_REVISION}}"
     disable_push: true
     stage: "build"
@@ -35,8 +35,8 @@ steps:
     type: "freestyle" # Run any command
     image: "${{build}}" # The image in which command will be executed
     working_directory: "${{clone}}" # Running command where code cloned
-    commands:
-      - spruce -v
+    cmd:
+      - "-v"
     stage: "test"
 
   bump-build-number:
@@ -60,5 +60,3 @@ steps:
       branch:
         only:
           - master
-
-
