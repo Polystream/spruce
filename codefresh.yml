@@ -1,0 +1,64 @@
+# More examples of Codefresh YAML can be found at
+# https://codefresh.io/docs/docs/yaml-examples/examples/
+
+version: "1.0"
+# Stages can help you organize your steps in stages
+stages:
+  - "clone"
+  - "build"
+  - "test"
+  - "push"
+
+steps:
+  clone:
+    title: "Cloning repository"
+    type: "git-clone"
+    repo: "Polystream/spruce"
+    # CF_BRANCH value is auto set when pipeline is triggered
+    # Learn more at codefresh.io/docs/docs/codefresh-yaml/variables/
+    revision: "${{CF_BRANCH}}"
+    git: "github"
+    stage: "clone"
+
+  build:
+    title: "Building Docker image"
+    type: "build"
+    image_name: "build-containers-build-spruce"
+    working_directory: "${{clone}}"
+    dockerfile: "Dockerfile"
+    tag: "${{CF_REVISION}}"
+    disable_push: true
+    stage: "build"
+
+  test:
+    title: "Running test"
+    type: "freestyle" # Run any command
+    image: "${{build}}" # The image in which command will be executed
+    working_directory: "${{clone}}" # Running command where code cloned
+    commands:
+      - spruce -v
+    stage: "test"
+
+  bump-build-number:
+      type: bump-build-number
+      fail_fast: true
+      stage: "test"
+
+  push:
+    type: push
+    description: push to the artifactory container registry
+    title: push to artifactory polystream-platform-docker-dev
+    fail_fast: true
+    tags:
+    - "${{MAJOR_VERSION}}.${{MINOR_VERSION}}.${{CF_BUILD_NUMBER}}"
+    - latest
+    arguments:
+      candidate: "${{build}}"
+      registry: polystream-platform-docker-dev
+    stage: "push"
+    when:
+      branch:
+        only:
+          - master
+
+
